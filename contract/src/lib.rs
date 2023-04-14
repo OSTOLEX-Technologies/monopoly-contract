@@ -1,64 +1,61 @@
-// Find all our documentation at https://docs.near.org
+mod game;
+
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{log, near_bindgen};
+use near_sdk::{AccountId, BorshStorageKey, CryptoHash, near_bindgen};
+use near_sdk::store::LookupMap;
+use crate::game::{GameConfig, GameData};
+use crate::StorageKeys::Games;
 
-// Define the default message
-const DEFAULT_MESSAGE: &str = "Hello";
+type GameId = u64;
 
-// Define the contract structure
+#[derive(BorshStorageKey, BorshDeserialize, BorshSerialize)]
+enum StorageKeys {
+    Games,
+    VoteKick {hash: CryptoHash},
+    PlayersVotes {hash: CryptoHash},
+    Votes {hash: CryptoHash},
+    PlayersInGame {hash: CryptoHash},
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Contract {
-    message: String,
+    games: LookupMap<GameId, GameData>,
+    next_game_id: u64,
 }
 
-// Define the default, which automatically initializes the contract
 impl Default for Contract{
-    fn default() -> Self{
-        Self{message: DEFAULT_MESSAGE.to_string()}
+    fn default() -> Self {
+        Self {
+            games: LookupMap::new(Games),
+            next_game_id: 0,
+        }
     }
 }
 
-// Implement the contract structure
 #[near_bindgen]
 impl Contract {
-    // Public method - returns the greeting saved, defaulting to DEFAULT_MESSAGE
-    pub fn get_greeting(&self) -> String {
-        return self.message.clone();
+    pub fn init_game(&mut self, game_config: GameConfig) -> GameData {
+        let game_data = GameData::new(&game_config, self.next_game_id);
+        self.next_game_id += 1;
+
+        game_data
     }
 
-    // Public method - accepts a greeting, such as "howdy", and records it
-    pub fn set_greeting(&mut self, message: String) {
-        log!("Saving greeting {}", message);
-        self.message = message;
-    }
-}
+    pub fn make_move(&mut self, game_data: GameData) {
+        if !self.games.contains_key(&game_data.game_id) {
+            panic!("Game not found")
+        };
 
-/*
- * The rest of this file holds the inline tests for the code above
- * Learn more about Rust tests: https://doc.rust-lang.org/book/ch11-01-writing-tests.html
- */
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn get_default_greeting() {
-        let contract = Contract::default();
-        // this test did not call set_greeting so should return the default "Hello" greeting
-        assert_eq!(
-            contract.get_greeting(),
-            "Hello".to_string()
-        );
+        self.games.insert(game_data.game_id, game_data);
     }
 
-    #[test]
-    fn set_then_get_greeting() {
-        let mut contract = Contract::default();
-        contract.set_greeting("howdy".to_string());
-        assert_eq!(
-            contract.get_greeting(),
-            "howdy".to_string()
-        );
+    pub fn get_game_data(&self, game_id: GameId) -> GameData {
+        self.games.get(&game_id).expect("Game not found").clone()
+    }
+
+    pub fn vote_kick(&mut self, player_to_kick_id: AccountId, game_id: GameId) {
+        let game_data = self.games.get_mut(&game_id).expect("Game not found");
+        game_data.vote_kick(player_to_kick_id);
     }
 }
