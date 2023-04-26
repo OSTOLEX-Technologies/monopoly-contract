@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use near_sdk::{AccountId, near_bindgen};
+use crate::GameId;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::env::predecessor_account_id;
 use near_sdk::serde::Serialize;
-use crate::{GameId};
+use near_sdk::{near_bindgen, AccountId};
+use std::collections::HashMap;
 
 #[near_bindgen]
 #[derive(Serialize)]
@@ -18,11 +18,12 @@ pub struct GameConfig {
 #[serde(crate = "near_sdk::serde")]
 pub struct GameData {
     pub game_id: GameId,
+    pub current_player_id: AccountId,
+    pub is_game_over: bool,
     players: String,
     current_offers: String,
     last_transactions: String,
     last_actions: String,
-    current_player_id: AccountId,
 
     vote_kick: HashMap<AccountId, u8>,
     players_votes: HashMap<AccountId, Vec<AccountId>>,
@@ -41,15 +42,19 @@ impl GameData {
             vote_kick: HashMap::new(),
             players_votes: HashMap::new(),
             players_in_game: game_config.players_in_game.clone(),
+            is_game_over: false,
         }
     }
 
-    pub fn vote_kick(&mut self, player_to_kick_id: AccountId) {
+    pub fn vote_kick(&mut self, player_to_kick_id: AccountId) -> bool {
         let account_id = predecessor_account_id();
 
         match self.players_votes.get_mut(&account_id) {
-            None => { self.players_votes.insert(account_id, vec![player_to_kick_id]); },
-            Some(player_votes) =>  {
+            None => {
+                self.players_votes
+                    .insert(account_id, vec![player_to_kick_id]);
+            }
+            Some(player_votes) => {
                 for player_id in player_votes.iter() {
                     if player_id.eq(&player_to_kick_id) {
                         panic!("You have already voted for this player")
@@ -62,12 +67,14 @@ impl GameData {
                     for player_id in self.players_in_game.iter() {
                         if player_id.eq(&player_to_kick_id) {
                             self.players_in_game.swap_remove(idx);
-                            return;
+                            return true;
                         }
                         idx += 1;
                     }
                 }
             }
         };
+
+        return false;
     }
 }
