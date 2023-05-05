@@ -1,12 +1,12 @@
 use crate::GameId;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::env::predecessor_account_id;
-use near_sdk::serde::Serialize;
+use near_sdk::serde::{Serialize, Deserialize};
 use near_sdk::{near_bindgen, AccountId};
 use std::collections::HashMap;
 
 #[near_bindgen]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct GameConfig {
     players: String,
@@ -14,7 +14,7 @@ pub struct GameConfig {
     players_in_game: Vec<AccountId>,
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Serialize, Clone)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct GameData {
     pub game_id: GameId,

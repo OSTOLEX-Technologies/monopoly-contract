@@ -1,6 +1,7 @@
 mod account;
 mod game;
 mod storage_tracker;
+mod enumerable;
 
 use crate::account::Account;
 use crate::game::{GameConfig, GameData};
@@ -76,9 +77,6 @@ impl Contract {
             .expect("Game not found");
     }
 
-    pub fn get_game_data(&self, game_id: GameId) -> GameData {
-        self.games.get(&game_id).expect("Game not found").clone()
-    }
 
     pub fn vote_kick(&mut self, player_to_kick_id: AccountId, game_id: GameId) {
         let game_data = self.games.get_mut(&game_id).expect("Game not found");
