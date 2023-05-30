@@ -157,7 +157,24 @@ impl StorageManagement for Contract {
     }
 
     fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
-        todo!()
+        let user = env::predecessor_account_id();
+        let amount_to_withdraw = amount.unwrap().0;
+
+        let mut account = self.internal_get_account(&user);
+        let storage_balance = account.storage_balance;
+        let remaining_balance = storage_balance - amount_to_withdraw;
+
+        // Assume that we need at least storage_balance_bounds at storage_balance after operation
+        if remaining_balance < self.storage_balance_bounds().min.0 {
+            env::panic_str("Insufficient storage balance");
+        }
+
+        account.storage_balance = remaining_balance;
+        self.internal_set_account(&user, account);
+
+        Promise::new(env::predecessor_account_id()).transfer(amount_to_withdraw);
+        
+        self.storage_balance_of(user).unwrap()
     }
 
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
