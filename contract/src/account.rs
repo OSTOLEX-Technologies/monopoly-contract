@@ -6,6 +6,7 @@ use near_contract_standards::storage_management::{
 use near_sdk::json_types::U128;
 use near_sdk::serde::Serialize;
 use near_sdk::{env, require, Balance, Promise, StorageUsage};
+use uint::static_assertions::assert_trait_sub_all;
 
 pub const MIN_STORAGE_BYTES: StorageUsage = 2000;
 const MIN_STORAGE_BALANCE: Balance = MIN_STORAGE_BYTES as Balance * env::STORAGE_PRICE_PER_BYTE;
@@ -129,7 +130,30 @@ impl StorageManagement for Contract {
         account_id: Option<AccountId>,
         registration_only: Option<bool>,
     ) -> StorageBalance {
-        todo!()
+        let user = account_id.unwrap_or(env::predecessor_account_id());
+        let registration_only = registration_only.unwrap_or(false);
+        let attached_deposit = env::attached_deposit();
+        let min_balance = self.storage_balance_bounds().min;
+
+        if attached_deposit < min_balance.0 {
+            env::panic_str("Deposit is less than the minimum storage balance");
+        }
+
+        let mut account = self.internal_unwrap_account_or_create(&user, attached_deposit);
+
+        if registration_only {
+            let refund = attached_deposit - min_balance.0;
+            if refund > 0 {
+                Promise::new(env::predecessor_account_id()).transfer(refund);
+            }
+            account.storage_balance = min_balance.0;
+        } else {
+            account.storage_balance = attached_deposit;
+        }
+
+        self.internal_set_account(&user, account);
+
+        self.storage_balance_of(user).unwrap()
     }
 
     fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
@@ -148,6 +172,14 @@ impl StorageManagement for Contract {
     }
 
     fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
-        todo!()
+        let account = self.internal_get_account(&account_id);
+        
+        Some(StorageBalance {
+                total: account.storage_balance.into(),
+                available: U128((account.storage_balance - 
+                    Balance::from(account.used_bytes)) * env::storage_byte_cost(),
+                ),
+            })
     }
+
 }
