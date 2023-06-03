@@ -162,12 +162,14 @@ impl StorageManagement for Contract {
 
         let mut account = self.internal_get_account(&user);
         let storage_balance = account.storage_balance;
-        let remaining_balance = storage_balance - amount_to_withdraw;
-
+        
         // Assume that we need at least storage_balance_bounds at storage_balance after operation
-        if remaining_balance < self.storage_balance_bounds().min.0 {
+        // TODO: check if remaining_balance < self.storage_balance_bounds().min.0 or < 0
+        if storage_balance < amount_to_withdraw {
             env::panic_str("Insufficient storage balance");
         }
+
+        let remaining_balance = storage_balance - amount_to_withdraw;
 
         account.storage_balance = remaining_balance;
         self.internal_set_account(&user, account);
@@ -178,7 +180,17 @@ impl StorageManagement for Contract {
     }
 
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
-        todo!()
+        let user = env::predecessor_account_id();
+        let force_unregister = force.unwrap_or(false);
+        let account = self.internal_get_account(&user);
+
+        if !force_unregister && account.used_bytes > 0 {
+            env::panic_str("Cannot unregister storage. Storage must be empty or use force");
+        }
+        
+        self.accounts.remove(&user);
+
+        return true;
     }
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {
