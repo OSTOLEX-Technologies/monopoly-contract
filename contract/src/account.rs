@@ -6,7 +6,6 @@ use near_contract_standards::storage_management::{
 use near_sdk::json_types::U128;
 use near_sdk::serde::Serialize;
 use near_sdk::{env, require, Balance, Promise, StorageUsage};
-use uint::static_assertions::assert_trait_sub_all;
 
 pub const MIN_STORAGE_BYTES: StorageUsage = 2000;
 const MIN_STORAGE_BALANCE: Balance = MIN_STORAGE_BYTES as Balance * env::STORAGE_PRICE_PER_BYTE;

@@ -9,7 +9,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct GameConfig {
-    players: String,
+    players: Vec<String>,
     current_player_id: AccountId,
     players_in_game: Vec<AccountId>,
 }
@@ -20,7 +20,7 @@ pub struct GameData {
     pub game_id: GameId,
     pub current_player_id: AccountId,
     pub is_game_over: bool,
-    players: String,
+    players: Vec<String>,
     current_offers: String,
     last_transactions: String,
     last_actions: String,

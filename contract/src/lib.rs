@@ -7,7 +7,7 @@ use crate::account::Account;
 use crate::game::{GameConfig, GameData};
 use crate::StorageKeys::{Accounts, GamePerAccountId, Games, StorageDeposit};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::env::{attached_deposit, predecessor_account_id, storage_byte_cost, storage_usage};
+use near_sdk::env::{attached_deposit, predecessor_account_id};
 use near_sdk::store::LookupMap;
 use near_sdk::{near_bindgen, AccountId, Balance, BorshStorageKey, CryptoHash};
 

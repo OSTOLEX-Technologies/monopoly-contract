@@ -29,3 +29,27 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Ignore Cargo generated files
+/target/
+Cargo.lock
+
+# Ignore build artifacts
+**/*.rs.bk
+
+# Ignore generated documentation
+/doc/
+
+# Ignore IDE and editor files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+integration-tests/
+contract/target
